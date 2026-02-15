@@ -73,7 +73,7 @@ lib/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/elementary-quiz-reviewer.git
+   git clone https://github.com/technobytedev/elementary_quiz_reviewer.git
    cd elementary-quiz-reviewer
    ```
 
@@ -154,7 +154,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Authors
 
-- **Your Name** - *Initial work* - [YourGitHub](https://github.com/yourusername)
+- **Cedric Isubol** - *Initial work* - technobytedev(https://github.com/technobytedev)
 
 ## 🙏 Acknowledgments
 
@@ -166,8 +166,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Your Name - [@yourtwitter](https://twitter.com/yourtwitter) - your.email@example.com
 
-Project Link: [https://github.com/yourusername/elementary-quiz-reviewer](https://github.com/yourusername/elementary-quiz-reviewer)
-
+Project Link: [https://github.com/technobytedev/elementary_quiz_reviewer](https://github.com/technobytedev/elementary_quiz_reviewer)
 ---
 
 ⭐ If you find this project helpful, please give it a star!
