@@ -65,7 +65,7 @@ class GradeRepository {
   "subject_name": "Reading and Literacy",
   "questions": [
     {"question": "Anong tunog ang maririnig sa simula ng salitang 'Ulan'?", "choices": ["/a/", "/e/", "/i/", "/u/"], "correct_answer": "/u/"},
-    {"question": "Aling salita ang may tatlong pantig (syllables)?", "choices": ["Mesa", "Paaralan", "Mata", "Lapis"], "correct_answer": "Paaralan"},
+    {"question": "Aling salita ang may apat na pantig (syllables)?", "choices": ["Mesa", "Paaralan", "Mata", "Lapis"], "correct_answer": "Paaralan"},
     {"question": "Alin sa mga ito ang pangalan ng isang tao?", "choices": ["Pusa", "Lolo", "Silya", "Parke"], "correct_answer": "Lolo"},
     {"question": "Anong letra ang dapat ipalit sa 'm' sa salitang 'maba' upang maging 'saba'?", "choices": ["t", "s", "k", "l"], "correct_answer": "s"},
     {"question": "Alin ang tamang baybay ng salitang 'pencil' sa Filipino?", "choices": ["L-a-p-i-s", "L-a-f-i-s", "L-a-p-e-s", "L-a-p-i-z"], "correct_answer": "L-a-p-i-s"},

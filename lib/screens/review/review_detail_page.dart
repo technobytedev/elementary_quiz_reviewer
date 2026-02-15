@@ -21,6 +21,9 @@ class _ReviewDetailPageState extends State<ReviewDetailPage>
     with SingleTickerProviderStateMixin {
   GradeLevel? gradeData;
   TabController? _tabController;
+  
+  // Store user answers: Map<subjectIndex, Map<questionIndex, selectedAnswer>>
+  Map<int, Map<int, String>> userAnswers = {};
 
   @override
   void initState() {
@@ -38,6 +41,161 @@ class _ReviewDetailPageState extends State<ReviewDetailPage>
   void dispose() {
     _tabController?.dispose();
     super.dispose();
+  }
+
+  void _selectAnswer(int subjectIndex, int questionIndex, String answer) {
+    setState(() {
+      if (userAnswers[subjectIndex] == null) {
+        userAnswers[subjectIndex] = {};
+      }
+      userAnswers[subjectIndex]![questionIndex] = answer;
+    });
+  }
+
+  void _finishQuiz() {
+    if (gradeData == null) return;
+
+    int currentSubjectIndex = _tabController!.index;
+    Subject currentSubject = gradeData!.curriculum[currentSubjectIndex];
+    
+    // Get user answers for current subject
+    Map<int, String> subjectAnswers = userAnswers[currentSubjectIndex] ?? {};
+    
+    // Calculate score
+    int correctCount = 0;
+    int totalQuestions = currentSubject.questions.length;
+    
+    for (int i = 0; i < totalQuestions; i++) {
+      String? userAnswer = subjectAnswers[i];
+      String correctAnswer = currentSubject.questions[i].correctAnswer;
+      
+      if (userAnswer == correctAnswer) {
+        correctCount++;
+      }
+    }
+
+    // Show result dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        double percentage = (correctCount / totalQuestions) * 100;
+        bool passed = percentage >= 75;
+        
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Column(
+            children: [
+              Icon(
+                passed ? Icons.emoji_events : Icons.sentiment_dissatisfied,
+                size: 60,
+                color: passed ? AppColors.orange : AppColors.gray,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                passed ? 'Congratulations!' : 'Keep Practicing!',
+                style: TextStyle(
+                  color: passed ? AppColors.purple : AppColors.gray,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Subject: ${currentSubject.subjectName}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.purple,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.purple.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      'Your Score',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.gray,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '$correctCount / $totalQuestions',
+                      style: const TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.purple,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${percentage.toStringAsFixed(1)}%',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: passed ? AppColors.orange : AppColors.gray,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (subjectAnswers.length < totalQuestions)
+                Text(
+                  'You answered ${subjectAnswers.length} out of $totalQuestions questions',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.gray,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                'Review Answers',
+                style: TextStyle(color: AppColors.gray),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  // Clear answers for current subject
+                  userAnswers[currentSubjectIndex] = {};
+                });
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.orange,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Try Again',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -121,9 +279,49 @@ class _ReviewDetailPageState extends State<ReviewDetailPage>
                 Expanded(
                   child: TabBarView(
                     controller: _tabController,
-                    children: gradeData!.curriculum.map((subject) {
-                      return _buildSubjectContent(subject);
+                    children: gradeData!.curriculum.asMap().entries.map((entry) {
+                      int subjectIndex = entry.key;
+                      Subject subject = entry.value;
+                      return _buildSubjectContent(subject, subjectIndex);
                     }).toList(),
+                  ),
+                ),
+                // Finish Quiz Button
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, -4),
+                      ),
+                    ],
+                  ),
+                  child: SafeArea(
+                    top: false,
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _finishQuiz,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.orange,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Finish Quiz',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -131,14 +329,16 @@ class _ReviewDetailPageState extends State<ReviewDetailPage>
     );
   }
 
-  Widget _buildSubjectContent(Subject subject) {
+  Widget _buildSubjectContent(Subject subject, int subjectIndex) {
     return Container(
       color: AppColors.gray,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: subject.questions.length,
-        itemBuilder: (context, index) {
-          final question = subject.questions[index];
+        itemBuilder: (context, questionIndex) {
+          final question = subject.questions[questionIndex];
+          String? selectedAnswer = userAnswers[subjectIndex]?[questionIndex];
+          
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(16),
@@ -168,7 +368,7 @@ class _ReviewDetailPageState extends State<ReviewDetailPage>
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        'Question ${index + 1}',
+                        'Question ${questionIndex + 1}',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -176,6 +376,36 @@ class _ReviewDetailPageState extends State<ReviewDetailPage>
                         ),
                       ),
                     ),
+                    const Spacer(),
+                    if (selectedAnswer != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.purple.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(
+                              Icons.check_circle,
+                              size: 16,
+                              color: AppColors.purple,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Answered',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.purple,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -190,7 +420,7 @@ class _ReviewDetailPageState extends State<ReviewDetailPage>
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Choices:',
+                  'Choose your answer:',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -202,53 +432,76 @@ class _ReviewDetailPageState extends State<ReviewDetailPage>
                   final choiceIndex = choiceEntry.key;
                   final choice = choiceEntry.value;
                   final letters = ['A', 'B', 'C', 'D'];
+                  final isSelected = selectedAnswer == choice;
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.purple.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: AppColors.purple.withOpacity(0.2),
-                        width: 1.5,
+                  return GestureDetector(
+                    onTap: () {
+                      _selectAnswer(subjectIndex, questionIndex, choice);
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.purple.withOpacity(0.15)
+                            : AppColors.purple.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.purple
+                              : AppColors.purple.withOpacity(0.2),
+                          width: isSelected ? 2 : 1.5,
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: AppColors.purple,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Center(
-                            child: Text(
-                              letters[choiceIndex],
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.purple
+                                  : AppColors.purple.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Center(
+                              child: Text(
+                                letters[choiceIndex],
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : AppColors.purple,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            choice,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              color: AppColors.gray,
-                              height: 1.3,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              choice,
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: AppColors.gray,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                                height: 1.3,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                          if (isSelected)
+                            const Icon(
+                              Icons.check_circle,
+                              color: AppColors.purple,
+                              size: 24,
+                            ),
+                        ],
+                      ),
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ),
           );
