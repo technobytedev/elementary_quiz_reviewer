@@ -61,9 +61,142 @@ class _ReviewDetailPageState extends State<ReviewDetailPage>
     // Get user answers for current subject
     Map<int, String> subjectAnswers = userAnswers[currentSubjectIndex] ?? {};
     
+    int totalQuestions = currentSubject.questions.length;
+    int answeredQuestions = subjectAnswers.length;
+    
+    // Check if all questions are answered
+    if (answeredQuestions < totalQuestions) {
+      int unanswered = totalQuestions - answeredQuestions;
+      
+      // Show warning dialog
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Column(
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  size: 60,
+                  color: AppColors.orange,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Incomplete Quiz',
+                  style: TextStyle(
+                    color: AppColors.purple,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'You have not answered all questions yet.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppColors.gray,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check_circle, color: AppColors.purple, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Answered: $answeredQuestions',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.purple,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.radio_button_unchecked, color: AppColors.orange, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Unanswered: $unanswered',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.orange,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Divider(),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Total: $totalQuestions questions',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.gray,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Please answer all questions before finishing the quiz.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.gray,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  backgroundColor: AppColors.purple,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Continue Answering',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+      return; // Stop here, don't show results
+    }
+    
     // Calculate score
     int correctCount = 0;
-    int totalQuestions = currentSubject.questions.length;
     
     for (int i = 0; i < totalQuestions; i++) {
       String? userAnswer = subjectAnswers[i];
@@ -501,7 +634,7 @@ class _ReviewDetailPageState extends State<ReviewDetailPage>
                       ),
                     ),
                   );
-                }),
+                }).toList(),
               ],
             ),
           );
